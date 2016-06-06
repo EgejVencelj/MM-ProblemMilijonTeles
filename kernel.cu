@@ -19,39 +19,21 @@ __host__ __device__ int ix(int i, int j, int n) { // __forceinline__ ?
 	return i*n + j;
 }
 
-__device__ void vectorAdd(float *a, float *b, float *c, int n) {
-	int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (i < n)
-		c[i] = a[i] + b[i];
-}
-
-__device__ void vectorSubtract(float *a, float *b, float *c, int n) {
-	int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (i < n)
-		c[i] = a[i] - b[i];
-}
-
 __device__ void vectorSubtract(int ix1, int ix2, float *a, float *b, int n, int m) {
-	int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (i < m)
+	for (int i = 0; i < m; i++) {
 		b[ix(i, ix2, n)] = a[ix(i, ix1, n)] - a[ix(i, ix2, n)];
+	}
 }
 
 __device__ void vectorAdd(float *r, int ix1, float *a, int n, int m) {
-	int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (i < m)
-		a[ix(i, ix1, n)] = a[ix(i, ix1, n)] + r[i];
+	for (int i = 0; i < m; i++) {
+		a[ix(i, ix1, n)] = a[ix(i, ix1, n)] + r[ix(i, ix1, n)];
+	}
 }
 
-__device__ void vectorMultiply(float k, float *a, float *b, int n) {
-	int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (i < n)
-		b[i] = k * a[i];
+__device__ void vectorMultiply(float k, int ix1, float *a, int n, int m) {
+	for (int i = 0; i < m; i++)
+		a[ix(i, ix1, n)] = k * a[ix(i, ix1, n)];
 }
 
 __device__ float vectorLengthSquared(int ix1, float *a, int n, int m) {
@@ -80,14 +62,6 @@ __device__ void matrixAdd(float *a, float *b, float *c, int n, int m) {
 		c[i] = a[i] + b[i];
 }
 
-__device__ void matrixSubtract(float *a, float *b, float *c, int n, int m) {
-	int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-	int len = n*m;
-	if (i < len)
-		c[i] = a[i] + b[i];
-}
-
 __device__ void matrixMultiply(float k, float *a, float *b, int n, int m) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -98,29 +72,21 @@ __device__ void matrixMultiply(float k, float *a, float *b, int n, int m) {
 
 // TODO: add loops to all functions
 __device__ void gravity(float *x, float *a, float *mass, float *r, int n, int m) {
-	//cudaMemset(a, 0, n * m * sizeof(float));
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 
-	//float *r;
-	//cudaMalloc(&r, m * sizeof(float));
-
-	//for (int i = 0; i < n; i++) {
 	if (i < n) {
 		for (int j = 0; j < m; j++) {
-			a[ix(i, j, n)] = 0;
+			a[ix(j, i, n)] = 0;
 		}
 		for (int j = 0; j < n; j++) {
 			if (i != j) {
 				vectorSubtract(j, i, x, r, n, m);
 				float d = vectorLengthSquared(i, r, n, m);
-				vectorMultiply(mass[j] / (d*sqrtf(d)), r, r, m);
+				vectorMultiply(G * mass[j] / (d*sqrtf(d)), i, r, n, m);
 				vectorAdd(r, i, a, n, m);
 			}
 		}
 	}
-	//matrixMultiply(G, a, a, n, m);
-
-	//cudaFree(r);
 }
 
 __constant__ float *mass;
@@ -200,6 +166,57 @@ __global__ void mainLoop(float *x, float *v, float *mass, float *kx[4], float *k
 
 }
 
+__global__ void go(float *a, int m, int n) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	//int j = abs(i - 1);
+
+	float mass[] = { 1e11f, 1e11f, 1e11f };
+	//float mass[] = { 1e11f, 1e11f };
+	float x[] = { 0, 0, 0, -1, 0, 1 };
+	//float x[] = { 2, 7, -1, 1 };
+	//float v[] = { 0, 0, 0, 0, 0, 0 };
+
+	float r[3 * 2];
+	//if (i < n) {
+		/*for (int j = 0; j < m; j++) {
+			a[ix(j, i, n)] = 0;
+		}
+		for (int j = 0; j < n; j++) {
+			if (i != j) {
+				vectorSubtract(j, i, x, r, n, m);
+				float d = vectorLengthSquared(i, r, n, m);
+				vectorMultiply(G * mass[j] / (d*sqrtf(d)), i, r, n, m);
+				vectorAdd(r, i, a, n, m);
+			}
+		}*/
+		//a[i] = 5;
+		//a[i] = vectorLengthSquared(i, x, n, m);
+		//vectorSubtract(j, i, x, a, n, m);
+		
+	//}
+	gravity(x, a, mass, r, n, m);
+}
+
+void test() {
+	int m = 2;
+	int n = 3;
+	float *d_a;
+	cudaMalloc(&d_a, m * n * sizeof(float));
+	go << < BLOCKS, THREADS >> >(d_a, m, n);
+
+	float a[3*2];
+	cudaMemcpy(a, d_a, m * n * sizeof(float), cudaMemcpyDeviceToHost);
+
+	/*for (int i = 0; i < m; i++) {
+		printf("%f %f %f\n", a[n*i], a[n*i+1], a[n*i+2]);
+	}*/
+	printf("%f %f %f %f %f %f\n", a[0], a[1], a[2], a[3], a[4], a[5]);
+	//printf("%f %f %f %f\n", a[0], a[1], a[2], a[3]);
+	/*for (int i = 0; i < n*m; i++)
+		printf("%n ", a[i]);
+	printf("\n");*/
+}
+
 int main() {
 	/*
 	shared memory is faster than local or global
@@ -225,6 +242,9 @@ int main() {
 	try managed memory ?
 	*/
 
+	test();
+	return 0;
+
 	float dt;
 	int n; // object count
 	int m; // dimension count
@@ -237,7 +257,7 @@ int main() {
 	cudaMalloc(&mass, n*sizeof(float));
 
 	float *r; // additional memory for computation
-	cudaMalloc(&x, n*m*sizeof(float));
+	cudaMalloc(&r, n*m*sizeof(float));
 
 	float *xWithOffset;
 	cudaMalloc(&xWithOffset, n*m*sizeof(float));
