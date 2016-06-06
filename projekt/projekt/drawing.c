@@ -64,7 +64,7 @@ void Draw(){
 	//prog[1] = fmod(prog[1] + 0.07, 2 *  M_PI);
 
 	//glEnd();
-
+	printf("%.2f\n", rand());
 	glutSwapBuffers();
 }
 
@@ -81,7 +81,7 @@ void Initialize() {
 }
 
 
-int main(int argc, char* argv[]) {
+int drawThings(int argc, char* argv[]) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
