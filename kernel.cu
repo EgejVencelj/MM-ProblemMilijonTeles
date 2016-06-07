@@ -21,7 +21,7 @@
 #define	G		        (6.67408e-11f)
 
 #define RUN_ON_CPU		(0)
-#define DATA_ID			(2)
+#define DATA_ID			(1)
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -385,6 +385,95 @@ __global__ void go(float *x, float *v, float *mass, float *xWithOffset, float *r
 	//}
 }
 
+__global__ void stagedRK(int stage, float *x, float *v, float *mass, float *xWithOffset, float *r, float dt, int n, int m,
+	float *k1x, float *k2x, float *k3x, float *k4x, float *k1v, float *k2v, float *k3v, float *k4v) {
+
+	switch (stage) {
+	case 0:
+		// k1x = v
+		matrixCopy(v, k1x, n, m);
+
+		// k1v = g(x, mass)
+		//__syncthreads();
+		gravity(x, k1v, mass, r, n, m);
+		//__syncthreads();
+		break;
+	case 1:
+		// k2x = v + k1v*dt/2
+		matrixMultiply(dt / 2, k1v, k2x, n, m);
+		matrixAdd(v, k2x, k2x, n, m);
+		// k2v = g(x + k1x*dt/2, mass)
+		matrixMultiply(dt / 2, k1x, xWithOffset, n, m);
+		matrixAdd(xWithOffset, x, xWithOffset, n, m);
+		break;
+	case 2:
+		//__syncthreads();
+		gravity(xWithOffset, k2v, mass, r, n, m);
+		//__syncthreads();
+		break;
+	case 3:
+		// k3x = v + k2v*dt/2
+		matrixMultiply(dt / 2, k2v, k3x, n, m);
+		matrixAdd(v, k3x, k3x, n, m);
+		// k3v = g(x + k2x*dt/2, mass)
+		matrixMultiply(dt / 2, k2x, xWithOffset, n, m);
+		matrixAdd(xWithOffset, x, xWithOffset, n, m);
+		break;
+	case 4:
+		//__syncthreads();
+		gravity(xWithOffset, k3v, mass, r, n, m);
+		//__syncthreads();
+		break;
+	case 5:
+		// k4x = v + k3v*dt
+		matrixMultiply(dt, k3v, k4x, n, m);
+		matrixAdd(v, k4x, k4x, n, m);
+		// k4v = g(x + k3x*dt, mass)
+		matrixMultiply(dt, k3x, xWithOffset, n, m);
+		matrixAdd(xWithOffset, x, xWithOffset, n, m);
+		break;
+	case 6:
+		//__syncthreads();
+		gravity(xWithOffset, k4v, mass, r, n, m);
+		//__syncthreads();
+		break;
+	case 7:
+		// x += (k1x + 2*k2x + 2*k3x + k4x)*dt/6;
+		matrixMultiply(dt / 6, k1x, k1x, n, m);
+		matrixMultiply(dt / 3, k2x, k2x, n, m);
+		matrixMultiply(dt / 3, k3x, k3x, n, m);
+		matrixMultiply(dt / 6, k4x, k4x, n, m);
+
+		// k1x will hold the sum
+		matrixAdd(k1x, k2x, k1x, n, m);
+		matrixAdd(k1x, k3x, k1x, n, m);
+		matrixAdd(k1x, k4x, k1x, n, m);
+
+		matrixAdd(x, k1x, x, n, m);
+
+		// v += (k1v + 2*k2v + 2*k3v + k4v)*dt/6;
+		matrixMultiply(dt / 6, k1v, k1v, n, m);
+		matrixMultiply(dt / 3, k2v, k2v, n, m);
+		matrixMultiply(dt / 3, k3v, k3v, n, m);
+		matrixMultiply(dt / 6, k4v, k4v, n, m);
+
+		// k1v will hold the sum
+		matrixAdd(k1v, k2v, k1v, n, m);
+		matrixAdd(k1v, k3v, k1v, n, m);
+		matrixAdd(k1v, k4v, k1v, n, m);
+
+		matrixAdd(v, k1v, v, n, m);
+		break;
+	}
+}
+
+void stagedRK(int blocks, int threads, float *x, float *v, float *mass, float *xWithOffset, float *r, float dt, int n, int m,
+	float *k1x, float *k2x, float *k3x, float *k4x, float *k1v, float *k2v, float *k3v, float *k4v) {
+
+	for (int i = 0; i <= 7; i++)
+		stagedRK << <blocks, threads >> >(i, x, v, mass, xWithOffset, r, dt, n, m, k1x, k2x, k3x, k4x, k1v, k2v, k3v, k4v);
+}
+
 void drawFunc(){
 	glClear(GL_COLOR_BUFFER_BIT);
 	glColor3f(1.0, 1.0, 1.0);
@@ -401,7 +490,8 @@ void drawFunc(){
 		//}
 	}
 	else{
-		go <<< BLOCKS, THREADS >>>(d_x, d_v, d_mass, xWithOffset, r, dt, n, m, k1x, k2x, k3x, k4x, k1v, k2v, k3v, k4v);
+		//go <<< BLOCKS, THREADS >>>(d_x, d_v, d_mass, xWithOffset, r, dt, n, m, k1x, k2x, k3x, k4x, k1v, k2v, k3v, k4v);
+		stagedRK(BLOCKS*16, THREADS/8, d_x, d_v, d_mass, xWithOffset, r, dt, n, m, k1x, k2x, k3x, k4x, k1v, k2v, k3v, k4v);
 
 		cudaMemcpy(x, d_x, n*m*sizeof(int), cudaMemcpyDeviceToHost);
 		cudaMemcpy(v, d_v, n*m*sizeof(int), cudaMemcpyDeviceToHost);
