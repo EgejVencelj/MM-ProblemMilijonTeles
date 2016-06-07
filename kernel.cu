@@ -21,13 +21,14 @@
 #define	G		        (6.67408e-11f)
 
 #define RUN_ON_CPU		(0)
+#define DATA_ID			(2)
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
-#define SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 720
+#define SCREEN_WIDTH 1820
+#define SCREEN_HEIGHT 920
 
 float dt;
 int n; // object count
@@ -92,11 +93,14 @@ __host__ __device__ float vectorLengthSquared(int ix1, float *a, int n, int m) {
 
 
 __device__ void matrixCopy(float *a, float *b, int n, int m) { // cudaMemcpy ?
-	int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-	int len = n*m;
-	if (i < len)
-		b[i] = a[i];
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+ 
+    int len = n*m;
+    //if (i < len)
+    while (i < len) {
+        b[i] = a[i];
+        i += blockDim.x * gridDim.x;
+    }
 }
 
 void matrixCopyCPU(float *a, float *b, int n, int m) { //CPU matrixCopy
@@ -111,8 +115,11 @@ __device__ void matrixAdd(float *a, float *b, float *c, int n, int m) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 
 	int len = n * m;
-	if (i < len)
+	//if (i < len
+	while (i < len) {
 		c[i] = a[i] + b[i];
+		i += blockDim.x * gridDim.x;
+	}
 }
 
 void matrixAddCPU(float *a, float *b, float *c, int n, int m) {
@@ -127,8 +134,11 @@ __device__ void matrixMultiply(float k, float *a, float *b, int n, int m) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 
 	int len = n*m;
-	if (i < len)
+	//if (i < len)
+	while (i < len) {
 		b[i] = k * a[i];
+		i += blockDim.x * gridDim.x;
+	}
 }
 
 void matrixMultiplyCPU(float k, float *a, float *b, int n, int m) {
@@ -143,7 +153,8 @@ void matrixMultiplyCPU(float k, float *a, float *b, int n, int m) {
 __device__ void gravity(float *x, float *a, float *mass, float *r, int n, int m) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 
-	if (i < n) {
+	//if (i < n) {
+	while (i < n) {
 		for (int j = 0; j < m; j++) {
 			a[ix(j, i, n)] = 0;
 		}
@@ -155,6 +166,7 @@ __device__ void gravity(float *x, float *a, float *mass, float *r, int n, int m)
 				vectorAdd(r, i, a, n, m);
 			}
 		}
+		i += blockDim.x * gridDim.x;
 	}
 }
 
@@ -378,7 +390,7 @@ void drawFunc(){
 	glColor3f(1.0, 1.0, 1.0);
 
 	glEnable(GL_POINT_SMOOTH);
-	glPointSize(3);
+	glPointSize(1);
 
 	if (RUN_ON_CPU){
 		
@@ -415,7 +427,7 @@ void GLinit(int argc, char* argv[]) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-	glutInitWindowPosition(200, 200);
+	glutInitWindowPosition(0, 0);
 	glutCreateWindow("Galaxy");
 
 	glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -427,14 +439,10 @@ void GLinit(int argc, char* argv[]) {
 void GLstart(){
 	glutDisplayFunc(drawFunc);
 
-	GLtimer(14);
+	GLtimer(100);
 	glutMainLoop();
 }
 
-
-void testCPU(){
-
-}
 
 void loadData(int sampleID){
 	FILE* fp;
@@ -455,6 +463,13 @@ void loadData(int sampleID){
 		n = 1024;
 		m = 3;
 		fname = "tab1024";
+		break;
+	case 2:
+		dt = 0.1;
+
+		n = 3000;
+		m = 3;
+		fname = "tab8096";
 		break;
 	default:
 		break;
@@ -539,7 +554,7 @@ int main() {
 	try managed memory ?
 	*/
 
-	loadData(1);
+	loadData(DATA_ID);
 
 	if (RUN_ON_CPU){
 
