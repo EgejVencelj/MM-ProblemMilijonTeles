@@ -17,12 +17,7 @@
 int BLOCKS = 256;
 int THREADS = 1024;
 
-#define VALS_PER_THREAD (8)
-
 #define	G		        (6.67408e-11f)
-
-
-
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -76,7 +71,7 @@ int bench = 0;
 
 __constant__ float *d_mass;
 
-__host__ __device__ int ix(int i, int j, int n) { // __forceinline__ ?
+__host__ __device__ int ix(int i, int j, int n) {
 	return i*n + j;
 }
 
@@ -106,11 +101,10 @@ __host__ __device__ float vectorLengthSquared(int ix1, float *a, int n, int m) {
 	return result;
 }
 
-__device__ void matrixCopy(float *a, float *b, int n, int m) { // cudaMemcpy ?
+__device__ void matrixCopy(float *a, float *b, int n, int m) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
  
     int len = n*m;
-    //if (i < len)
     while (i < len) {
         b[i] = a[i];
         i += blockDim.x * gridDim.x;
@@ -129,7 +123,6 @@ __device__ void matrixAdd(float *a, float *b, float *c, int n, int m) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 
 	int len = n * m;
-	//if (i < len
 	while (i < len) {
 		c[i] = a[i] + b[i];
 		i += blockDim.x * gridDim.x;
@@ -148,7 +141,6 @@ __device__ void matrixMultiply(float k, float *a, float *b, int n, int m) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 
 	int len = n*m;
-	//if (i < len)
 	while (i < len) {
 		b[i] = k * a[i];
 		i += blockDim.x * gridDim.x;
@@ -163,11 +155,9 @@ void matrixMultiplyCPU(float k, float *a, float *b, int n, int m) {
 	}
 }
 
-// TODO: add loops to all functions
 __device__ void gravity(float *x, float *a, float *mass, float *r, int n, int m) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 
-	//if (i < n) {
 	while (i < n) {
 		for (int j = 0; j < m; j++) {
 			a[ix(j, i, n)] = 0;
@@ -199,71 +189,6 @@ void gravityCPU(float *x, float *a, float *mass, float *r, int n, int m) {
 			}
 		}
 	}
-}
-
-
-
-__global__ void mainLoop(float *x, float *v, float *mass, float *kx[4], float *kv[4], float *xWithOffset, float *r, float dt, int n, int m) {
-	// add more __syncthreads() ? remove some ?
-	while (true) {
-		// k1x = v
-		matrixCopy(v, kx[0], n, m);
-		// k1v = g(x, mass)
-		gravity(x, kv[0], mass, r, n, m);
-
-		// k2x = v + k1v*dt/2
-		matrixMultiply(dt / 2, kv[0], kx[1], n, m);
-		matrixAdd(v, kx[1], kx[1], n, m);
-		// k2v = g(x + k1x*dt/2, mass)
-		matrixMultiply(dt / 2, kx[0], xWithOffset, n, m);
-		matrixAdd(xWithOffset, x, xWithOffset, n, m);
-		gravity(xWithOffset, kv[1], mass, r, n, m);
-
-		// k3x = v + k2v*dt/2
-		matrixMultiply(dt / 2, kv[1], kx[2], n, m);
-		matrixAdd(v, kx[2], kx[2], n, m);
-		// k3v = g(x + k2x*dt/2, mass)
-		matrixMultiply(dt / 2, kx[1], xWithOffset, n, m);
-		matrixAdd(xWithOffset, x, xWithOffset, n, m);
-		gravity(xWithOffset, kv[2], mass, r, n, m);
-
-		// k4x = v + k3v*dt
-		matrixMultiply(dt, kv[2], kx[3], n, m);
-		matrixAdd(v, kx[3], kx[3], n, m);
-		// k4v = g(x + k3x*dt, mass)
-		matrixMultiply(dt, kx[2], xWithOffset, n, m);
-		matrixAdd(xWithOffset, x, xWithOffset, n, m);
-		gravity(xWithOffset, kv[3], mass, r, n, m);
-
-		// x += (k1x + 2*k2x + 2*k3x + k4x)*dt/6;
-		matrixMultiply(dt / 6, kx[0], kx[0], n, m);
-		matrixMultiply(dt / 3, kx[1], kx[1], n, m);
-		matrixMultiply(dt / 3, kx[2], kx[2], n, m);
-		matrixMultiply(dt / 6, kx[3], kx[3], n, m);
-
-		// k1x will hold the sum
-		matrixAdd(kx[0], kx[1], kx[0], n, m);
-		matrixAdd(kx[0], kx[2], kx[0], n, m);
-		matrixAdd(kx[0], kx[3], kx[0], n, m);
-
-		matrixAdd(x, kx[0], x, n, m);
-
-
-		// v += (k1v + 2*k2v + 2*k3v + k4v)*dt/6;
-		matrixMultiply(dt / 6, kv[0], kv[0], n, m);
-		matrixMultiply(dt / 3, kv[1], kv[1], n, m);
-		matrixMultiply(dt / 3, kv[2], kv[2], n, m);
-		matrixMultiply(dt / 6, kv[3], kv[3], n, m);
-
-		// k1v will hold the sum
-		matrixAdd(kv[0], kv[1], kv[0], n, m);
-		matrixAdd(kv[0], kv[2], kv[0], n, m);
-		matrixAdd(kv[0], kv[3], kv[0], n, m);
-
-		matrixAdd(v, kv[0], v, n, m);
-	}
-
-
 }
 
 void stepRKCPU(float *x, float *v, float *mass, float *kx[4], float *kv[4], float *xWithOffset, float *r, float dt, int n, int m) {
@@ -324,81 +249,6 @@ void stepRKCPU(float *x, float *v, float *mass, float *kx[4], float *kv[4], floa
 	matrixAddCPU(v, kv[0], v, n, m);
 }
 
-__global__ void go(float *x, float *v, float *mass, float *xWithOffset, float *r, float dt, int n, int m,
-	float *k1x, float *k2x, float *k3x, float *k4x, float *k1v, float *k2v, float *k3v, float *k4v) {
-	// k1x = v
-	matrixCopy(v, k1x, n, m);
-
-	// k1v = g(x, mass)
-	__syncthreads();
-	gravity(x, k1v, mass, r, n, m);
-	__syncthreads();
-
-	// k2x = v + k1v*dt/2
-	matrixMultiply(dt / 2, k1v, k2x, n, m);
-	matrixAdd(v, k2x, k2x, n, m);
-	// k2v = g(x + k1x*dt/2, mass)
-	matrixMultiply(dt / 2, k1x, xWithOffset, n, m);
-	matrixAdd(xWithOffset, x, xWithOffset, n, m);
-	__syncthreads();
-	gravity(xWithOffset, k2v, mass, r, n, m);
-	__syncthreads();
-
-
-
-	// k3x = v + k2v*dt/2
-	matrixMultiply(dt / 2, k2v, k3x, n, m);
-	matrixAdd(v, k3x, k3x, n, m);
-	// k3v = g(x + k2x*dt/2, mass)
-	matrixMultiply(dt / 2, k2x, xWithOffset, n, m);
-	matrixAdd(xWithOffset, x, xWithOffset, n, m);
-	__syncthreads();
-	gravity(xWithOffset, k3v, mass, r, n, m);
-	__syncthreads();
-
-	// k4x = v + k3v*dt
-	matrixMultiply(dt, k3v, k4x, n, m);
-	matrixAdd(v, k4x, k4x, n, m);
-	// k4v = g(x + k3x*dt, mass)
-	matrixMultiply(dt, k3x, xWithOffset, n, m);
-	matrixAdd(xWithOffset, x, xWithOffset, n, m);
-	__syncthreads();
-	gravity(xWithOffset, k4v, mass, r, n, m);
-	__syncthreads();
-
-
-	// x += (k1x + 2*k2x + 2*k3x + k4x)*dt/6;
-	matrixMultiply(dt / 6, k1x, k1x, n, m);
-	matrixMultiply(dt / 3, k2x, k2x, n, m);
-	matrixMultiply(dt / 3, k3x, k3x, n, m);
-	matrixMultiply(dt / 6, k4x, k4x, n, m);
-
-	// k1x will hold the sum
-	matrixAdd(k1x, k2x, k1x, n, m);
-	matrixAdd(k1x, k3x, k1x, n, m);
-	matrixAdd(k1x, k4x, k1x, n, m);
-
-	matrixAdd(x, k1x, x, n, m);
-
-	// v += (k1v + 2*k2v + 2*k3v + k4v)*dt/6;
-	matrixMultiply(dt / 6, k1v, k1v, n, m);
-	matrixMultiply(dt / 3, k2v, k2v, n, m);
-	matrixMultiply(dt / 3, k3v, k3v, n, m);
-	matrixMultiply(dt / 6, k4v, k4v, n, m);
-
-	// k1v will hold the sum
-	matrixAdd(k1v, k2v, k1v, n, m);
-	matrixAdd(k1v, k3v, k1v, n, m);
-	matrixAdd(k1v, k4v, k1v, n, m);
-
-	matrixAdd(v, k1v, v, n, m);
-
-	//if (threadIdx.x == 1) {
-	//	printf("x %.9f %.9f %.9f %.9f\n", x[0], x[1], x[2], x[3]);
-	//	printf("v %.9f %.9f %.9f %.9f\n", v[0], v[1], v[2], v[3]);
-	//}
-}
-
 __global__ void stagedRK(int stage, float *x, float *v, float *mass, float *xWithOffset, float *r, float dt, int n, int m,
 	float *k1x, float *k2x, float *k3x, float *k4x, float *k1v, float *k2v, float *k3v, float *k4v) {
 
@@ -408,9 +258,7 @@ __global__ void stagedRK(int stage, float *x, float *v, float *mass, float *xWit
 		matrixCopy(v, k1x, n, m);
 
 		// k1v = g(x, mass)
-		//__syncthreads();
 		gravity(x, k1v, mass, r, n, m);
-		//__syncthreads();
 		break;
 	case 1:
 		// k2x = v + k1v*dt/2
@@ -421,9 +269,7 @@ __global__ void stagedRK(int stage, float *x, float *v, float *mass, float *xWit
 		matrixAdd(xWithOffset, x, xWithOffset, n, m);
 		break;
 	case 2:
-		//__syncthreads();
 		gravity(xWithOffset, k2v, mass, r, n, m);
-		//__syncthreads();
 		break;
 	case 3:
 		// k3x = v + k2v*dt/2
@@ -434,9 +280,7 @@ __global__ void stagedRK(int stage, float *x, float *v, float *mass, float *xWit
 		matrixAdd(xWithOffset, x, xWithOffset, n, m);
 		break;
 	case 4:
-		//__syncthreads();
 		gravity(xWithOffset, k3v, mass, r, n, m);
-		//__syncthreads();
 		break;
 	case 5:
 		// k4x = v + k3v*dt
@@ -447,9 +291,7 @@ __global__ void stagedRK(int stage, float *x, float *v, float *mass, float *xWit
 		matrixAdd(xWithOffset, x, xWithOffset, n, m);
 		break;
 	case 6:
-		//__syncthreads();
 		gravity(xWithOffset, k4v, mass, r, n, m);
-		//__syncthreads();
 		break;
 	case 7:
 		// x += (k1x + 2*k2x + 2*k3x + k4x)*dt/6;
@@ -501,8 +343,7 @@ void drawFunc(){
 
 	}
 	else{
-		//go <<< BLOCKS, THREADS >>>(d_x, d_v, d_mass, xWithOffset, r, dt, n, m, k1x, k2x, k3x, k4x, k1v, k2v, k3v, k4v);
-		stagedRK(BLOCKS*16, THREADS/8, d_x, d_v, d_mass, xWithOffset, r, dt, n, m, k1x, k2x, k3x, k4x, k1v, k2v, k3v, k4v);
+		stagedRK(BLOCKS, THREADS, d_x, d_v, d_mass, xWithOffset, r, dt, n, m, k1x, k2x, k3x, k4x, k1v, k2v, k3v, k4v);
 
 		cudaMemcpy(x, d_x, n*m*sizeof(int), cudaMemcpyDeviceToHost);
 		cudaMemcpy(v, d_v, n*m*sizeof(int), cudaMemcpyDeviceToHost);
@@ -644,7 +485,7 @@ void benchmark(){
 				stepRKCPU(x, v, mass, kx, kv, xWithOffset, r, dt, n, m);
 			}
 			else{
-				stagedRK(BLOCKS * 16, THREADS / 8, d_x, d_v, d_mass, xWithOffset, r, dt, n, m, k1x, k2x, k3x, k4x, k1v, k2v, k3v, k4v);
+				stagedRK(BLOCKS, THREADS, d_x, d_v, d_mass, xWithOffset, r, dt, n, m, k1x, k2x, k3x, k4x, k1v, k2v, k3v, k4v);
 
 				cudaMemcpy(x, d_x, n*m*sizeof(int), cudaMemcpyDeviceToHost);
 				cudaMemcpy(v, d_v, n*m*sizeof(int), cudaMemcpyDeviceToHost);
@@ -665,7 +506,7 @@ void runCompute(){
 				stepRKCPU(x, v, mass, kx, kv, xWithOffset, r, dt, n, m);
 			}
 			else{
-				stagedRK(BLOCKS * 16, THREADS / 8, d_x, d_v, d_mass, xWithOffset, r, dt, n, m, k1x, k2x, k3x, k4x, k1v, k2v, k3v, k4v);
+				stagedRK(BLOCKS, THREADS, d_x, d_v, d_mass, xWithOffset, r, dt, n, m, k1x, k2x, k3x, k4x, k1v, k2v, k3v, k4v);
 
 				cudaMemcpy(x, d_x, n*m*sizeof(int), cudaMemcpyDeviceToHost);
 				cudaMemcpy(v, d_v, n*m*sizeof(int), cudaMemcpyDeviceToHost);
@@ -705,30 +546,6 @@ void GLstart(){
 
 
 int main(int argc, char *argv[]) {
-	/*
-	shared memory is faster than local or global
-	it's okay to do non-parallel tasks on GPU if it means less transfering
-
-	multiply and add in one instruction ?
-	math_functions.h device_functions.h
-
-	functions:
-	__device__
-	executed on device, called from device
-
-	__global__
-	"kernel", executed on device, called from host (or device if 3.x), return void, execution configuration, asynchronous
-
-	__host__
-	default, executed on host, called from host, can be combined with __device__ for both
-
-	__noinline, __forceinline__
-
-	gridDim, blockIdx, blockDim, threadIdx, warpSize
-
-	try managed memory ?
-	*/
-
 	for (int i = 1; i < argc; i++){
 		if (argv[i][0] == '-'){
 			switch (argv[i][1]){
@@ -816,55 +633,28 @@ int main(int argc, char *argv[]) {
 		free(&mass);
 	}
 	else{
-		cudaError_t cudaStatus;
-
-		//demo 1
-
-		//float mass[] = { 1e-5f, 1e-6f };
-		//float x[] = { 0, 0, 0, 1e-6 };
-		//float v[] = { 0, 1e-5, 1e-5, 0 };
-		//float t = 0.1;
-		//float dt = 0.001;
-		
-		//int m = 2;
-		//int n = 2;
-
 		cudaMalloc(&d_x, n*m*sizeof(float));
 		cudaMemcpy(d_x, x, n*m*sizeof(int), cudaMemcpyHostToDevice);
 
 		cudaMalloc(&d_v, n*m*sizeof(float));
 		cudaMemcpy(d_v, v, n*m*sizeof(int), cudaMemcpyHostToDevice);
-		//float *d_mass;
-		cudaMalloc(&d_mass, n*sizeof(float));
-		cudaStatus = cudaMemcpy(d_mass, mass, n*sizeof(int), cudaMemcpyHostToDevice);
-		if (cudaStatus != cudaSuccess) {
-			fprintf(stderr, "addKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-		}
 
+		cudaMalloc(&d_mass, n*sizeof(float));
+		cudaMemcpy(d_mass, mass, n*sizeof(int), cudaMemcpyHostToDevice);
 
 		cudaMalloc(&r, n*m*sizeof(float));
 		cudaMalloc(&xWithOffset, n*m*sizeof(float));
 
-
-
 		cudaMalloc(&k1x, n*m*sizeof(float));
 		cudaMalloc(&k2x, n*m*sizeof(float));
 		cudaMalloc(&k3x, n*m*sizeof(float));
-		cudaStatus = cudaMalloc(&k4x, n*m*sizeof(float));
-		if (cudaStatus != cudaSuccess) {
-			fprintf(stderr, "addKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-		}
+		cudaMalloc(&k4x, n*m*sizeof(float));
 
 		cudaMalloc(&k1v, n*m*sizeof(float));
 		cudaMalloc(&k2v, n*m*sizeof(float));
 		cudaMalloc(&k3v, n*m*sizeof(float));
-		cudaStatus = cudaMalloc(&k4v, n*m*sizeof(float));
-		if (cudaStatus != cudaSuccess) {
-			fprintf(stderr, "addKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-		}
+		cudaMalloc(&k4v, n*m*sizeof(float));
 
-
-		//mainLoop<<< BLOCKS, THREADS >>>(d_x, d_v, d_mass, kx, kv, xWithOffset, r, dt, n, m);
 
 		if (visual){
 			GLinit(NULL, NULL);
