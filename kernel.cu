@@ -6,7 +6,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <Windows.h>
 
 #include <GL/glew.h>
 #include <GL/freeglut.h>
@@ -14,8 +14,8 @@
 
 #define _GNU_SOURCE
 
-#define	BLOCKS          (256)
-#define THREADS         (1024)
+int BLOCKS = 256;
+int THREADS = 1024;
 
 #define VALS_PER_THREAD (8)
 
@@ -28,8 +28,8 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#define SCREEN_WIDTH 1820
-#define SCREEN_HEIGHT 920
+int SCREEN_WIDTH = 800;
+int SCREEN_HEIGHT = 800;
 
 float dt;
 int n; // object count
@@ -499,9 +499,6 @@ void drawFunc(){
 		
 		stepRKCPU(x, v, mass, kx, kv, xWithOffset, r, dt, n, m);
 
-		//for (int i = 0; i < n; i++) {
-		//	printf("x: %f %f %f\n", x[ix(0, i, n)], x[ix(1, i, n)], x[ix(2, i, n)]);
-		//}
 	}
 	else{
 		//go <<< BLOCKS, THREADS >>>(d_x, d_v, d_mass, xWithOffset, r, dt, n, m, k1x, k2x, k3x, k4x, k1v, k2v, k3v, k4v);
@@ -522,31 +519,27 @@ void drawFunc(){
 	glutSwapBuffers();
 }
 
-void GLtimer(int frameTimeMs){
-	glutPostRedisplay();
-	glutTimerFunc(frameTimeMs, GLtimer, 0);
+
+double PCFreq = 0.0;
+__int64 CounterStart = 0;
+
+void StartCounter()
+{
+	LARGE_INTEGER li;
+	if (!QueryPerformanceFrequency(&li))
+		printf("QueryPerformanceFrequency failed!\n");
+
+	PCFreq = double(li.QuadPart) / 1000.0;
+
+	QueryPerformanceCounter(&li);
+	CounterStart = li.QuadPart;
 }
-
-void GLinit(int argc, char* argv[]) {
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-	glutInitWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-	glutInitWindowPosition(0, 0);
-	glutCreateWindow("Galaxy");
-
-	glClearColor(0.0, 0.0, 0.0, 0.0);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
+double GetCounter()
+{
+	LARGE_INTEGER li;
+	QueryPerformanceCounter(&li);
+	return double(li.QuadPart - CounterStart) / PCFreq;
 }
-
-void GLstart(){
-	glutDisplayFunc(drawFunc);
-
-	GLtimer(100);
-	glutMainLoop();
-}
-
 
 void loadData(int sampleID){
 	FILE* fp;
@@ -592,8 +585,12 @@ void loadData(int sampleID){
 
 	fp = fopen(fname, "r");
 
-	if (fp == NULL)
+	if (fp == NULL){
+		printf("ERROR: Missing file data file, exiting...\n");
 		exit(EXIT_FAILURE);
+	}
+
+		
 	for (size_t i = 0; i < n; i++)
 	{
 		for (size_t j = 0; j < 7; j++)
@@ -628,9 +625,83 @@ void loadData(int sampleID){
 	fclose(fp);
 	maxCoord[0] = maxCoord[0] - minCoord[0];
 	maxCoord[1] = maxCoord[1] - minCoord[1];
-	printf("%f %f\n%f %f\n", minCoord[0], minCoord[1], maxCoord[0], maxCoord[1]);
+	//printf("%f %f\n%f %f\n", minCoord[0], minCoord[1], maxCoord[0], maxCoord[1]);
 	//end data load segment
 }
+
+
+void benchmark(){
+	printf("\nAverage time:\n");
+	double diff;
+	for (size_t i = 0; i < 100; i++)
+	{
+		n = 2 + 8094 * i / 100;
+		StartCounter();
+		//GetPerformanceCounter(1); // reset counter to zero 
+		for (size_t i = 0; i < 10; i++)
+		{
+			if (runOnCPU){
+				stepRKCPU(x, v, mass, kx, kv, xWithOffset, r, dt, n, m);
+			}
+			else{
+				stagedRK(BLOCKS * 16, THREADS / 8, d_x, d_v, d_mass, xWithOffset, r, dt, n, m, k1x, k2x, k3x, k4x, k1v, k2v, k3v, k4v);
+
+				cudaMemcpy(x, d_x, n*m*sizeof(int), cudaMemcpyDeviceToHost);
+				cudaMemcpy(v, d_v, n*m*sizeof(int), cudaMemcpyDeviceToHost);
+			}
+		}
+		diff = GetCounter()/10;
+		printf("%d\t%f\n", n, diff);
+	}
+}
+
+void runCompute(){
+	if (bench){
+		benchmark();
+	}
+	else{
+		while (1){
+			if (runOnCPU){
+				stepRKCPU(x, v, mass, kx, kv, xWithOffset, r, dt, n, m);
+			}
+			else{
+				stagedRK(BLOCKS * 16, THREADS / 8, d_x, d_v, d_mass, xWithOffset, r, dt, n, m, k1x, k2x, k3x, k4x, k1v, k2v, k3v, k4v);
+
+				cudaMemcpy(x, d_x, n*m*sizeof(int), cudaMemcpyDeviceToHost);
+				cudaMemcpy(v, d_v, n*m*sizeof(int), cudaMemcpyDeviceToHost);
+			}
+		}
+	}
+}
+
+
+
+void GLtimer(int frameTimeMs){
+	glutPostRedisplay();
+	glutTimerFunc(frameTimeMs, GLtimer, 0);
+}
+
+void GLinit(int argc, char* argv[]) {
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+	glutInitWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("Galaxy");
+
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
+}
+
+void GLstart(){
+	glutDisplayFunc(drawFunc);
+
+	GLtimer(100);
+	glutMainLoop();
+}
+
+
 
 
 int main(int argc, char *argv[]) {
@@ -662,7 +733,7 @@ int main(int argc, char *argv[]) {
 		if (argv[i][0] == '-'){
 			switch (argv[i][1]){
 			case 't':
-				dataID = sscanf(argv[i + 1], "%i", &dataID);
+				sscanf(argv[i + 1], "%i", &dataID);
 				if (dataID < 0 && dataID > 2){
 					printf("Test %d not available, default will be tested.", dataID);
 					dataID = 0;
@@ -676,7 +747,22 @@ int main(int argc, char *argv[]) {
 				visual = 0;
 				break;
 			case 'b':
+				visual = 0;
 				bench = 1;
+				dataID = 2;
+				break;
+			case 'B':
+				sscanf(argv[i + 1], "%i", &BLOCKS);
+				i++;
+				break;
+			case 'T':
+				sscanf(argv[i + 1], "%i", &THREADS);
+				i++;
+				break;
+			case 'w':
+				sscanf(argv[i + 1], "%i", &SCREEN_WIDTH);
+				sscanf(argv[i + 2], "%i", &SCREEN_HEIGHT);
+				i += 2;
 				break;
 			default:
 				goto parseError;
@@ -684,13 +770,25 @@ int main(int argc, char *argv[]) {
 		}
 		else {
 			parseError:
-			printf("Unrecognized command. Avaliable commands and switches:\n-t <N>\t- executes test N\n-c\t- executes on CPU\n-v\t- turns off visualization\n\nRerun with correct parameters.\n");
+			printf("Unrecognized command. Avaliable commands and switches:\
+				   \n-t <N>\t- executes test N\
+				   \n-c\t- executes on CPU\
+				   \n-v\t- turns off visualization\
+				   \n-b\t- benchmark preformance\
+				   \n-T <N>\t- sets the number N of GPU threads (default = 1024)\
+				   \n-B <N>\t- sets the number N of GPU blocks (default = 256)\
+				   \n-w <W><H>\t-t sets window size W x H\
+				   \n\n\nRerun with correct parameters.\n");
 			return;
 		}
 	}
 	printf("Test: %d\n", dataID);
 	printf("Run on %s\n", runOnCPU == 0 ? "GPU" : "CPU");
 	printf("Visualization: %s\n", visual == 1 ? "on" : "off");
+	if (runOnCPU == 0){
+		printf("Threads: %d\nBlocks: %d\n", THREADS, BLOCKS);
+	}
+	
 
 	loadData(dataID);
 
@@ -700,9 +798,13 @@ int main(int argc, char *argv[]) {
 			kv[i] = (float*)malloc(n*m*sizeof(float));
 		}
 
-
-		GLinit(NULL, NULL);
-		GLstart();
+		if (visual){
+			GLinit(NULL, NULL);
+			GLstart();
+		}
+		else{
+			runCompute();
+		}
 
 		for (int i = 0; i < 4; i++) {
 			free(&kx[i]);
@@ -764,8 +866,13 @@ int main(int argc, char *argv[]) {
 
 		//mainLoop<<< BLOCKS, THREADS >>>(d_x, d_v, d_mass, kx, kv, xWithOffset, r, dt, n, m);
 
-		GLinit(NULL, NULL);
-		GLstart();
+		if (visual){
+			GLinit(NULL, NULL);
+			GLstart();
+		}
+		else{
+			runCompute();
+		}
 
 		cudaFree(xWithOffset);	
 	}
