@@ -1,18 +1,18 @@
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\include\cuda_runtime.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\host_config.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\sal.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ConcurrencySal.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\vadefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\sal.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ConcurrencySal.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\vadefs.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\builtin_types.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\device_types.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\host_defines.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\driver_types.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\host_defines.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\limits.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stddef.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\limits.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stddef.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\surface_types.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\driver_types.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\texture_types.h
@@ -77,12 +77,12 @@ c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\surface_types.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\texture_types.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\vector_types.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\host_defines.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\string.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\time.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\wtime.inl
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\time.inl
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\string.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\time.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\wtime.inl
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\time.inl
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\math_functions.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\builtin_types.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\device_types.h
@@ -91,19 +91,19 @@ c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\surface_types.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\texture_types.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\vector_types.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\host_defines.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdlib.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cmath
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\yvals.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xkeycheck.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\use_ansi.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xtgmath.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xtr1common
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cstdlib
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdlib.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cmath
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\yvals.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xkeycheck.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\use_ansi.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xtgmath.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xtr1common
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cstdlib
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\math_functions.hpp
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\builtin_types.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\device_types.h
@@ -382,22 +382,22 @@ C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\include\cuda_runtime.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\include\device_launch_parameters.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\include\cuda.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\include\cuda_runtime.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\swprintf.inl
-C:\Users\Jurij\Documents\blala\projekt\\projekt\Glew and Glut\glew-1.11.0\include\GL/glew.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\swprintf.inl
+D:\Fax\2015\mm\Projekt 2 - Problem miljon teles\MM-ProblemMilijonTeles\projekt\\projekt\Glew and Glut\glew-1.11.0\include\GL/glew.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\um\GL/glu.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\shared\winapifamily.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\um\GL/gl.h
-C:\Users\Jurij\Documents\blala\projekt\\projekt\Glew and Glut\freeglut\include\GL/freeglut.h
-c:\users\jurij\documents\blala\projekt\projekt\glew and glut\freeglut\include\gl\freeglut_std.h
+D:\Fax\2015\mm\Projekt 2 - Problem miljon teles\MM-ProblemMilijonTeles\projekt\\projekt\Glew and Glut\freeglut\include\GL/freeglut.h
+d:\fax\2015\mm\projekt 2 - problem miljon teles\mm-problemmilijonteles\projekt\projekt\glew and glut\freeglut\include\gl\freeglut_std.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\um\windows.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\shared\sdkddkver.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\excpt.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdarg.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\excpt.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdarg.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\shared\windef.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\shared\minwindef.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\shared\specstrings.h
@@ -406,8 +406,8 @@ C:\Program Files (x86)\Windows Kits\8.1\Include\shared\specstrings_undef.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\shared\driverspecs.h
 c:\program files (x86)\windows kits\8.1\include\shared\sdv_driverspecs.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\um\winnt.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ctype.h
-C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ctype.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\shared\kernelspecs.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\shared\basetsd.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\shared\guiddef.h
@@ -495,6 +495,6 @@ C:\Program Files (x86)\Windows Kits\8.1\Include\um\mcx.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\um\imm.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\um\ime_cmodes.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\um\GL/gl.h
-c:\users\jurij\documents\blala\projekt\projekt\glew and glut\freeglut\include\gl\freeglut_ext.h
-C:\Users\Jurij\Documents\blala\projekt\\projekt\glfw-3.1.1.bin.WIN32\include\GLFW/glfw3.h
+d:\fax\2015\mm\projekt 2 - problem miljon teles\mm-problemmilijonteles\projekt\projekt\glew and glut\freeglut\include\gl\freeglut_ext.h
+D:\Fax\2015\mm\Projekt 2 - Problem miljon teles\MM-ProblemMilijonTeles\projekt\\projekt\glfw-3.1.1.bin.WIN32\include\GLFW/glfw3.h
 C:\Program Files (x86)\Windows Kits\8.1\Include\um\GL/gl.h

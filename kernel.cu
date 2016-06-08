@@ -7,21 +7,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <GLFW/glfw3.h>
 
 #define _GNU_SOURCE
 
-#define	BLOCKS          (1)
+#define	BLOCKS          (256)
 #define THREADS         (1024)
 
 #define VALS_PER_THREAD (8)
 
 #define	G		        (6.67408e-11f)
 
-#define RUN_ON_CPU		(0)
-#define DATA_ID			(1)
+
+
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -58,6 +59,20 @@ float *k2v;
 float *k3v;
 float *k4v;
 
+/* This structure is used by main to communicate with parse_opt. */
+struct arguments
+{
+	char *args[2];            /* ARG1 and ARG2 */
+	int verbose;              /* The -v flag */
+	char *outfile;            /* Argument for -o */
+	char *string1, *string2;  /* Arguments for -a and -b */
+};
+
+
+int dataID = 0;
+int runOnCPU = 0;
+int visual = 1;
+int bench = 0;
 
 __constant__ float *d_mass;
 
@@ -90,7 +105,6 @@ __host__ __device__ float vectorLengthSquared(int ix1, float *a, int n, int m) {
 
 	return result;
 }
-
 
 __device__ void matrixCopy(float *a, float *b, int n, int m) { // cudaMemcpy ?
     int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -481,7 +495,7 @@ void drawFunc(){
 	glEnable(GL_POINT_SMOOTH);
 	glPointSize(1);
 
-	if (RUN_ON_CPU){
+	if (runOnCPU){
 		
 		stepRKCPU(x, v, mass, kx, kv, xWithOffset, r, dt, n, m);
 
@@ -548,16 +562,16 @@ void loadData(int sampleID){
 
 		break;
 	case 1:
-		dt = 0.1;
+		dt = 0.05;
 
 		n = 1024;
 		m = 3;
 		fname = "tab1024";
 		break;
 	case 2:
-		dt = 0.1;
+		dt = 0.3;
 
-		n = 3000;
+		n = 8096;
 		m = 3;
 		fname = "tab8096";
 		break;
@@ -619,7 +633,7 @@ void loadData(int sampleID){
 }
 
 
-int main() {
+int main(int argc, char *argv[]) {
 	/*
 	shared memory is faster than local or global
 	it's okay to do non-parallel tasks on GPU if it means less transfering
@@ -644,10 +658,43 @@ int main() {
 	try managed memory ?
 	*/
 
-	loadData(DATA_ID);
+	for (int i = 1; i < argc; i++){
+		if (argv[i][0] == '-'){
+			switch (argv[i][1]){
+			case 't':
+				dataID = sscanf(argv[i + 1], "%i", &dataID);
+				if (dataID < 0 && dataID > 2){
+					printf("Test %d not available, default will be tested.", dataID);
+					dataID = 0;
+				}
+				i++;
+				break;
+			case 'c':
+				runOnCPU = 1;
+				break;
+			case 'v':
+				visual = 0;
+				break;
+			case 'b':
+				bench = 1;
+				break;
+			default:
+				goto parseError;
+			}
+		}
+		else {
+			parseError:
+			printf("Unrecognized command. Avaliable commands and switches:\n-t <N>\t- executes test N\n-c\t- executes on CPU\n-v\t- turns off visualization\n\nRerun with correct parameters.\n");
+			return;
+		}
+	}
+	printf("Test: %d\n", dataID);
+	printf("Run on %s\n", runOnCPU == 0 ? "GPU" : "CPU");
+	printf("Visualization: %s\n", visual == 1 ? "on" : "off");
 
-	if (RUN_ON_CPU){
+	loadData(dataID);
 
+	if (runOnCPU){
 		for (int i = 0; i < 4; i++) {
 			kx[i] = (float*)malloc(n*m*sizeof(float));
 			kv[i] = (float*)malloc(n*m*sizeof(float));
@@ -719,10 +766,6 @@ int main() {
 
 		GLinit(NULL, NULL);
 		GLstart();
-
-		for (int i = 0; i < n; i++) {
-			printf("m: %f\nx: %f %f %f\nv: %f %f %f\n\n", mass[i], x[ix(0, i, n)], x[ix(1, i, n)], x[ix(2, i, n)], v[ix(0, i, n)], v[ix(1, i, n)], v[ix(2, i, n)]);
-		}
 
 		cudaFree(xWithOffset);	
 	}
